@@ -3,6 +3,7 @@ package usecase
 import (
 	"go-rest-api/model"
 	"go-rest-api/repository"
+	"go-rest-api/validator"
 )
 
 /* ITaskUsecase is an interface that defines the usecase methods for tasks */
@@ -17,11 +18,12 @@ type ITaskUsecase interface {
 /* TaskUsecase is a struct that defines the usecase methods for tasks */
 type taskUsecase struct {
 	tr repository.ITaskRepository
+	tv validator.ITaskValidator
 }
 
 /* NewTaskUsecase is a function that returns a new TaskUsecase */
-func NewTaskUsecase(tr repository.ITaskRepository) ITaskUsecase {
-	return &taskUsecase{tr}
+func NewTaskUsecase(tr repository.ITaskRepository, tv validator.ITaskValidator) ITaskUsecase {
+	return &taskUsecase{tr, tv}
 }
 
 /* GetAllTasks is a method that returns all tasks */
@@ -60,6 +62,10 @@ func (tu *taskUsecase) GetTaskById(userId uint, taskId uint) (model.TaskResponse
 
 /* CreateTask is a method that creates a new task */
 func (tu *taskUsecase) CreateTask(task model.Task) (model.TaskResponse, error) {
+	// バリデーションを実行
+	if err := tu.tv.TaskValidate(task); err != nil {
+		return model.TaskResponse{}, err
+	}
 	if err := tu.tr.CreateTask(&task); err != nil {
 		return model.TaskResponse{}, err
 	}
@@ -74,6 +80,10 @@ func (tu *taskUsecase) CreateTask(task model.Task) (model.TaskResponse, error) {
 
 /* UpdateTask is a method that updates a task */
 func (tu *taskUsecase) UpdateTask(task model.Task, userId uint, taskId uint) (model.TaskResponse, error) {
+	// バリデーションを実行
+	if err := tu.tv.TaskValidate(task); err != nil {
+		return model.TaskResponse{}, err
+	}
 	if err := tu.tr.UpdateTask(&task, userId, taskId); err != nil {
 		return model.TaskResponse{}, err
 	}
